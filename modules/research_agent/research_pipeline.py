@@ -42,7 +42,11 @@ class ResearchPipeline:
         try:
             clean_json = re.sub(r'```json|```', '', sentiment_resp).strip()
             sent_data = json.loads(clean_json)
-            sentiment_score = float(sent_data.get("score", 0.5))
+            if isinstance(sent_data, dict):
+                score_raw = sent_data.get("score", 0.5)
+                sentiment_score = float(score_raw) if score_raw is not None else 0.5
+            else:
+                sentiment_score = 0.5
             # Cap at 0.95 to avoid constant "10/10" unless absolutely perfect
             if sentiment_score > 0.95: sentiment_score = 0.9
         except:
@@ -66,9 +70,11 @@ class ResearchPipeline:
             web_fin_resp = self.gateway.ask(fin_prompt, require_json=True)
             try:
                 clean_json = re.sub(r'```json|```', '', web_fin_resp).strip()
-                web_fin_data = json.loads(clean_json)
+                parsed = json.loads(clean_json)
+                web_fin_data = parsed if isinstance(parsed, dict) else {}
             except:
                 logger.warning("Failed to extract financials from web snippets.")
+                web_fin_data = {}
 
         # 4. Synthesize Summary (Balanced)
         summary_prompt = f"""
@@ -90,3 +96,10 @@ class ResearchPipeline:
 
 
 
+
+def run_research(company_name: str, promoter_names: list = None, primary_insights: str = None, image_path: str = None, demo_mode: bool = False) -> dict:
+    """
+    Wrapper for script-based access.
+    """
+    pipeline = ResearchPipeline()
+    return pipeline.run(company_name)

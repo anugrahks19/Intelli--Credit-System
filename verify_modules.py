@@ -13,7 +13,7 @@ def verify_modules():
     print(f"Module 2 Report Generated for: {research_report['company_name']}")
     print(f"Litigation Found: {research_report['litigation']['found']}")
     
-    print("\n✅ Both Modules are responding correctly.")
+    print("\n[SUCCESS] Both Modules are responding correctly.")
 
 if __name__ == "__main__":
     verify_modules()

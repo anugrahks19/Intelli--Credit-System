@@ -29,8 +29,12 @@ class HybridMerger:
         }
         
         for key, label in keys_to_check.items():
-            pdf_val = float(pdf_fins.get(key, 0) or 0)
-            web_val = float(web_fins.get(key, 0) or 0)
+            def _f(v):
+                try: return float(v) if v is not None else 0.0
+                except: return 0.0
+                
+            pdf_val = _f(pdf_fins.get(key))
+            web_val = _f(web_fins.get(key))
             
             # Scenario 1: PDF is zero, but Web has data -> Fill the gap
             if pdf_val == 0 and web_val > 0:

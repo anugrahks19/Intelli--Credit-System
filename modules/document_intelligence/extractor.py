@@ -37,8 +37,8 @@ class OllamaFinancialExtractor:
         """
         Takes raw text and returns a dictionary of financial metrics.
         """
-        # Upgraded: Massively increased context to see deep into reports
-        context = text[:100000] 
+        # Optimized context for speed & local LLM reliability
+        context = text[:35000]
 
 
         prompt = f"""
@@ -74,6 +74,11 @@ class OllamaFinancialExtractor:
             clean_json = re.sub(r'```json|```', '', raw_response).strip()
             data = json.loads(clean_json)
             
+            # Robustness: Ensure data is a dictionary
+            if not isinstance(data, dict):
+                logger.error(f"LLM returned non-dictionary response: {type(data)}")
+                data = {}
+            
             # Basic normalization (ensure all keys exist)
             defaults = {
                 "company_name": "Unknown",
@@ -98,8 +103,8 @@ class OllamaFinancialExtractor:
         """
         Extracts financial metrics for the current and previous financial year.
         """
-        # Upgraded context
-        context = text[:80000] 
+        # Optimized context
+        context = text[:30000]
         prompt = f"""
         Extract consolidated financial metrics for the LAST TWO financial years.
         Return EXCLUSIVELY a JSON object with 'current_year' and 'previous_year' keys.
@@ -113,15 +118,16 @@ class OllamaFinancialExtractor:
         raw_response = self._call_llm(prompt)
         try:
             clean_json = re.sub(r'```json|```', '', raw_response).strip()
-            return json.loads(clean_json)
+            data = json.loads(clean_json)
+            return data if isinstance(data, dict) else {"current_year": {}, "previous_year": {}}
         except:
             return {"current_year": {}, "previous_year": {}}
 
 
     def extract_risks(self, text: str) -> list:
         """Extracts qualitative risks from the text."""
-        # Upgraded context to find risks dispersed throughout report
-        context = text[:60000]
+        # Optimized context
+        context = text[:25000]
         prompt = f"""
         Analyze the following text and identify 3 potential credit risks.
         Return EXCLUSIVELY a JSON list of objects with 'category', 'risk', and 'impact' (Low/Medium/High).
@@ -134,7 +140,8 @@ class OllamaFinancialExtractor:
         raw_response = self._call_llm(prompt)
         try:
             clean_json = re.sub(r'```json|```', '', raw_response).strip()
-            return json.loads(clean_json)
+            data = json.loads(clean_json)
+            return data if isinstance(data, list) else []
         except:
             return []
 

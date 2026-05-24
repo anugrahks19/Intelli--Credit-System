@@ -1,0 +1,36 @@
+import os
+import requests
+import logging
+from dotenv import load_dotenv
+
+# Mocking the gateway behavior
+load_dotenv()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def test_cascading_gemini_v2():
+    api_key = os.getenv("GOOGLE_API_KEY")
+    # Including the specific models from the model listing
+    gemini_models = ["gemini-2.5-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-pro"]
+    
+    print("\n--- Testing Gemini Cascading Logic V2 ---")
+    for model in gemini_models:
+        print(f"\nTrying model: {model}...")
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        payload = {"contents": [{"parts": [{"text": "say hi"}]}]}
+        try:
+            resp = requests.post(url, json=payload, timeout=15)
+            if resp.status_code == 200:
+                print(f"✅ SUCCESS with {model}!")
+                print(f"Response: {resp.json()['candidates'][0]['content']['parts'][0]['text']}")
+                return
+            else:
+                print(f"❌ FAILED with {model}: {resp.status_code}")
+                # print(f"Error: {resp.text}")
+        except Exception as e:
+            print(f"⚠️ Exception with {model}: {e}")
+    else:
+        print("\n🚨 ALL GEMINI MODELS FAILED.")
+
+if __name__ == "__main__":
+    test_cascading_gemini_v2()

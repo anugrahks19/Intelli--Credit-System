@@ -23,16 +23,29 @@ class LLMGateway:
         Main entry point for LLM requests.
         Cycles through providers until one succeeds.
         """
-        
-        # 1. Try Gemini (Flash)
-        try:
-            res = self._call_gemini(prompt, "gemini-1.5-flash")
-            if res: return res
-        except Exception as e:
-            logger.warning(f"Fallback: Gemini Flash failed -> {e}")
+        # 1. Try Gemini Suite (Cascading through 7 models for maximum redundancy)
+        gemini_models = [
+            "gemini-2.5-flash", 
+            "gemini-1.5-flash", 
+            "gemini-1.5-flash-latest",
+            "gemini-1.5-pro", 
+            "gemini-1.5-pro-latest",
+            "gemini-2.0-flash-exp", 
+            "gemini-pro"
+        ]
+        for model in gemini_models:
+            try:
+                print(f"DEBUG: Trying Gemini Model: {model}...")
+                res = self._call_gemini(prompt, model)
+                if res: 
+                    logger.info(f"SUCCESS: Using Gemini Model: {model}")
+                    return res
+            except Exception as e:
+                logger.warning(f"DEBUG: Gemini {model} failed: {e}")
 
         # 2. Try Groq (Llama 3 70B)
         try:
+            print("DEBUG: Trying Groq (Llama 3 70B)...")
             res = self._call_groq(prompt, "llama3-70b-8192", require_json)
             if res: return res
         except Exception as e:
@@ -40,12 +53,14 @@ class LLMGateway:
 
         # 3. Try OpenRouter (Gemini Flash as backup)
         try:
+            print("DEBUG: Trying OpenRouter (Gemini Flash)...")
             res = self._call_openrouter(prompt, "google/gemini-flash-1.5")
             if res: return res
         except Exception as e:
             logger.warning(f"Fallback: OpenRouter failed -> {e}")
 
         # 4. Final Fail-Safe: Local Ollama
+        print(f"DEBUG: All Cloud APIs failed. Falling back to Local Ollama ({self.ollama_model})...")
         logger.info(f"Falling back to Local Ollama ({self.ollama_model})")
         return self._call_ollama(prompt, require_json)
 
@@ -58,6 +73,8 @@ class LLMGateway:
         resp = requests.post(url, json=payload, timeout=15)
         if resp.status_code == 200:
             return resp.json()['candidates'][0]['content']['parts'][0]['text']
+        else:
+            logger.error(f"Gemini API Error: {resp.status_code} - {resp.text}")
         return None
 
     def _call_groq(self, prompt: str, model: str, require_json: bool) -> Optional[str]:
@@ -77,6 +94,8 @@ class LLMGateway:
         resp = requests.post(url, json=payload, timeout=15)
         if resp.status_code == 200:
             return resp.json()['choices'][0]['message']['content']
+        else:
+            logger.error(f"Groq API Error: {resp.status_code} - {resp.text}")
         return None
 
     def _call_openrouter(self, prompt: str, model: str) -> Optional[str]:
@@ -97,6 +116,8 @@ class LLMGateway:
         resp = requests.post(url, json=payload, timeout=20)
         if resp.status_code == 200:
             return resp.json()['choices'][0]['message']['content']
+        else:
+            logger.error(f"OpenRouter API Error: {resp.status_code} - {resp.text}")
         return None
 
     def _call_ollama(self, prompt: str, require_json: bool) -> str:
