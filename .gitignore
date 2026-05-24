@@ -7,9 +7,13 @@ venv/
 
 # Environment
 .env
+.env.*
+!.env.example
 
 # Project specific
 uploads/
+reports/
+cache/
 *.pdf
 *.json
 !railway.json

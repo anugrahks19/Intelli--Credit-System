@@ -21,7 +21,7 @@ class SearchEngine:
         """
         if not self.client:
             logger.warning("Tavily API key not found. Returning empty results.")
-            return {"headlines": [], "mca_status": "Unknown", "litigation": "No data"}
+            return {"headlines": [], "mca_status": "Unknown", "litigation_found": False}
 
         try:
             # 1. News Search

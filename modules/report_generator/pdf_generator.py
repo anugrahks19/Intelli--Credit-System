@@ -118,16 +118,21 @@ class PDFGenerator:
         elements.append(Spacer(1, 0.2 * inch))
         elements.append(Paragraph(f"<b>Rationale:</b> {rec.get('rationale', '')}", self.styles['Normal']))
         
+        # Helper for safer float handling in PDF
+        def _f(v):
+            try: return float(v) if v is not None else 0.0
+            except: return 0.0
+
         # 3. Financial Health
         elements.append(Paragraph("2. FINANCIAL HEALTH HIGHLIGHTS", self.styles['SectionHeader']))
         fins = doc_intel.get("financials", {})
         fin_data = [
             ["Metric", "Value", "Benchmark Status"],
-            ["Operating Revenue", f"Rs. {fins.get('revenue_cr', 0)} Cr", "Target Achieved"],
-            ["EBITDA", f"Rs. {fins.get('ebitda_cr', 0)} Cr", "Health: Stable"],
-            ["Net Profit (PAT)", f"Rs. {fins.get('net_profit_cr', 0)} Cr", "Profitable"],
-            ["Debt to Equity", str(fins.get('debt_to_equity', 0)), "Gearing: Low" if float(fins.get('debt_to_equity', 0)) < 1.5 else "Gearing: High"],
-            ["Interest Coverage", str(fins.get('interest_coverage', 0)) + "x", "Strong" if float(fins.get('interest_coverage', 0)) > 2.5 else "Moderate"]
+            ["Operating Revenue", f"Rs. {_f(fins.get('revenue_cr'))} Cr", "Target Achieved"],
+            ["EBITDA", f"Rs. {_f(fins.get('ebitda_cr'))} Cr", "Health: Stable"],
+            ["Net Profit (PAT)", f"Rs. {_f(fins.get('net_profit_cr'))} Cr", "Profitable"],
+            ["Debt to Equity", str(_f(fins.get('debt_to_equity'))), "Gearing: Low" if _f(fins.get('debt_to_equity')) < 1.5 else "Gearing: High"],
+            ["Interest Coverage", str(_f(fins.get('interest_coverage'))) + "x", "Strong" if _f(fins.get('interest_coverage')) > 2.5 else "Moderate"]
         ]
         fin_table = Table(fin_data, colWidths=[2*inch, 2*inch, 2*inch])
         fin_table.setStyle(TableStyle([
@@ -143,7 +148,7 @@ class PDFGenerator:
         
         # 4. Market Intelligence
         elements.append(Paragraph("3. MARKET INTELLIGENCE & SENTIMENT", self.styles['SectionHeader']))
-        elements.append(Paragraph(f"<b>Sentiment Score:</b> {float(research.get('sentiment_score', 0.5))*10:.1f}/10", self.styles['Normal']))
+        elements.append(Paragraph(f"<b>Sentiment Score:</b> {_f(research.get('sentiment_score', 0.5))*10:.1f}/10", self.styles['Normal']))
         elements.append(Spacer(1, 0.1 * inch))
         elements.append(Paragraph(research.get("agent_summary", "No market summary available."), self.styles['Normal']))
         

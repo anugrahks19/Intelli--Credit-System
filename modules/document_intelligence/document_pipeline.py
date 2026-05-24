@@ -33,13 +33,13 @@ class DocumentPipeline:
             # Combine more pages for LLM context in large reports
             fin_pages = ingest_data.get("financial_pages", [])
             if fin_pages:
-                # Upgraded: Take top 30 relevant pages instead of 10
-                relevant_text = " ".join([ingest_data["text"][p] for p in fin_pages[:30]])
-                if progress_callback: progress_callback("Deep Extraction: Scanning Financial Core (30 Pages)...", 85)
+                # Reduced: Take top 15 relevant pages instead of 30 for speed
+                relevant_text = " ".join([ingest_data["text"][p] for p in fin_pages[:15]])
+                if progress_callback: progress_callback("Deep Extraction: Scanning Financial Core (15 Pages)...", 85)
             else:
-                # Upgraded: Take top 30 pages instead of 15
-                relevant_text = " ".join([text for i, text in ingest_data["text"].items() if i <= 30])
-                if progress_callback: progress_callback("Deep Extraction: Broad Scan (30 Pages)...", 80)
+                # Reduced: Take top 15 pages for speed
+                relevant_text = " ".join([text for i, text in ingest_data["text"].items() if i <= 15])
+                if progress_callback: progress_callback("Deep Extraction: Broad Scan (15 Pages)...", 80)
 
             
 
@@ -83,6 +83,7 @@ class DocumentPipeline:
             logger.error(f"Pillar 1 Pipeline failed: {e}")
             return self._get_empty_result()
 
+
     def _get_empty_result(self):
         return {
             "company_name": "Unknown",
@@ -90,3 +91,10 @@ class DocumentPipeline:
             "qualitative_risks": [],
             "extraction_confidence": 0.0
         }
+
+def run_pipeline(uploaded_files: list = None, company_name: str = None, demo_mode: bool = False) -> dict:
+    """
+    Wrapper for script-based access.
+    """
+    pipeline = DocumentPipeline()
+    return pipeline.run(uploaded_files or [])
