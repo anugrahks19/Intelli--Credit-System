@@ -55,6 +55,11 @@ async def get_status(session_id: str):
     return JSONResponse(content=data)
 
 
+@app.head("/", response_class=HTMLResponse)
+async def head_index():
+    return HTMLResponse(content="", status_code=200)
+
+
 @app.get("/", response_class=HTMLResponse)
 async def get_index():
     index_path = os.path.join(FRONTEND_DIR, "index.html")
