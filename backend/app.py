@@ -1,11 +1,16 @@
 
 
+import sys
+import os
+
+# Add the backend directory to sys.path so we can import orchestrator when run from root
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from fastapi import FastAPI, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
-import os
 import shutil
 import uuid
 from typing import List, Optional
